@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Minh An B2B Sales AI Agent — Dashboard</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app-frame">
+    <!-- LEFT VERTICAL ICON RAIL -->
+    <aside class="left-rail" aria-label="Điều hướng chính">
+      <div class="rail-brand" title="Công ty Công nghệ Minh An">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" fill="#ffffff" />
+          <circle cx="14.5" cy="10" r="3" fill="#191d2b" />
+        </svg>
+      </div>
+
+      <nav class="rail-nav">
+        <button class="rail-btn active" data-tab="workflow" data-tooltip="Tổng quan & Xử lý AI">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>
+          </svg>
+        </button>
+        <button class="rail-btn" data-tab="tracker" data-tooltip="Hồ sơ & Theo dõi 6 NVKD">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7" rx="1"/><rect x="12" y="6" width="3" height="11" rx="1"/><rect x="17" y="13" width="3" height="4" rx="1"/>
+          </svg>
+          <span class="rail-dot hidden" id="railTrackerDot"></span>
+        </button>
+        <button class="rail-btn" data-tab="approvals" data-tooltip="Trưởng phòng Duyệt vượt quyền">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>
+          </svg>
+          <span class="rail-badge hidden" id="railApprovalBadge">0</span>
+        </button>
+        <button class="rail-btn" data-tab="masterdata" data-tooltip="Bảng giá & Tồn kho Vận hành">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+        </button>
+      </nav>
+
+      <div class="rail-bottom">
+        <button class="rail-btn" id="btnToggleGemini" data-tooltip="Cấu hình Gemini API">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>
+          </svg>
+        </button>
+        <button class="rail-btn" id="btnResetDb" data-tooltip="Làm mới dữ liệu Demo">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN WORKSPACE -->
+    <div class="app-body">
+      <!-- TOP HEADER -->
+      <header class="top-header">
+        <div class="greeting-block">
+          <h1 id="greetingTitle">Xin chào, Đội ngũ Kinh doanh Minh An</h1>
+          <p class="greeting-sub">
+            <span class="status-dot live" id="serverDot"></span>
+            <span id="serverStatusText">Localhost Connected</span>
+            <span class="sep">•</span>
+            <span>Bảng giá hiệu lực: <strong id="priceVersionLabel">BG-2026-11</strong></span>
+            <span class="sep">•</span>
+            <span id="geminiModeChip" class="chip-soft">Offline Engine</span>
+          </p>
+        </div>
+
+        <div class="header-actions">
+          <!-- ACCOUNT SWITCHER -->
+          <div class="account-switcher" role="group" aria-label="Chuyển đổi tài khoản">
+            <button type="button" class="acct-btn active" id="btnRoleMinhAn" data-role="minhan">🏢 Doanh nghiệp Minh An</button>
+            <button type="button" class="acct-btn" id="btnRoleCustomer" data-role="customer">👤 Khách hàng B2B</button>
+          </div>
+
+          <div class="search-pill">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="globalSearchInput" placeholder="Tìm hồ sơ, công ty, SKU..." />
+          </div>
+
+          <div class="quick-tabs" id="minhAnQuickTabs">
+            <button class="qtab active" data-tab="workflow">Quy trình AI</button>
+            <button class="qtab" data-tab="tracker">Theo dõi <span class="qcount" id="countTracker">0</span></button>
+            <button class="qtab" data-tab="approvals">Duyệt vượt quyền <span class="qcount warn" id="countApprovals">0</span></button>
+            <button class="qtab" data-tab="masterdata">Bảng giá & Kho</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- OPTIONAL GEMINI API DRAWER -->
+      <section class="gemini-drawer hidden" id="geminiDrawer">
+        <div class="gemini-inner">
+          <div>
+            <strong>Kết nối Live Gemini AI (Tùy chọn)</strong>
+            <p class="muted">Mặc định chạy bằng bộ xử lý Offline trên Localhost. Nhập API Key nếu muốn dùng Gemini đọc hiểu email tự do; giá & tồn kho vẫn khóa cứng bởi backend.</p>
+          </div>
+          <div class="gemini-inputs">
+            <input type="password" id="geminiApiKeyInput" placeholder="Dán Gemini API Key (AIza...)" />
+            <button class="btn btn-dark btn-sm" id="btnSaveGeminiKey">Lưu & Bật</button>
+            <button class="btn btn-soft btn-sm" id="btnClearGeminiKey">Dùng Offline</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONTENT + RIGHT RAIL GRID -->
+      <div class="workspace-grid">
+        <main class="main-column">
+          <!-- TAB 1: WORKFLOW & HERO KPI -->
+          <section class="tab-panel active" id="tab-workflow">
+            <!-- 3 PASTEL HERO KPI CARDS (MATCHING REFERENCE) -->
+            <div class="kpi-grid">
+              <!-- Card 1: Lavender -->
+              <article class="kpi-card kpi-lavender">
+                <div class="kpi-top">
+                  <span class="kpi-label">Yêu cầu đã tiếp nhận</span>
+                  <span class="kpi-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                  </span>
+                </div>
+                <div class="kpi-main">
+                  <span class="kpi-value" id="kpiTotalValue">+180</span>
+                  <div class="kpi-trend">
+                    <span class="trend-pill up">↗ 24%</span>
+                    <span class="trend-sub" id="kpiTotalSub">ước tính/tuần (6 NVKD)</span>
+                  </div>
+                </div>
+                <div class="kpi-bars bars-3layer" id="barsCard1"></div>
+              </article>
+
+              <!-- Card 2: Sky Blue -->
+              <article class="kpi-card kpi-sky">
+                <div class="kpi-top">
+                  <span class="kpi-label">Chờ làm rõ / Thẩm định</span>
+                  <span class="kpi-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                  </span>
+                </div>
+                <div class="kpi-main">
+                  <span class="kpi-value" id="kpiPendingValue">+0</span>
+                  <div class="kpi-trend">
+                    <span class="trend-pill down" id="kpiPendingPill">SLA 24h</span>
+                    <span class="trend-sub">chống trôi hồ sơ</span>
+                  </div>
+                </div>
+                <div class="kpi-bars bars-gradient" id="barsCard2"></div>
+              </article>
+
+              <!-- Card 3: Orchid Pink -->
+              <article class="kpi-card kpi-pink">
+                <div class="kpi-top">
+                  <span class="kpi-label">Báo giá & Duyệt vượt quyền</span>
+                  <span class="kpi-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>
+                  </span>
+                </div>
+                <div class="kpi-main">
+                  <span class="kpi-value" id="kpiReadyValue">+0</span>
+                  <div class="kpi-trend">
+                    <span class="trend-pill up">✓ 100%</span>
+                    <span class="trend-sub">khớp giá BG-2026-11</span>
+                  </div>
+                </div>
+                <div class="kpi-bars bars-2layer" id="barsCard3"></div>
+              </article>
+            </div>
+
+            <!-- PIPELINE MATRIX (MATCHING 8-STEP MINH AN DIAGRAM) -->
+            <section class="surface-card pipeline-card">
+              <div class="card-head">
+                <div>
+                  <h2>Sơ đồ Quy trình AI Agent & Con người — Minh An (8 Bước)</h2>
+                  <p class="muted" id="currentOppLabel">Chọn 1 kịch bản mẫu hoặc nhập yêu cầu mới để xem Agent phát hiện lỗi & chuyển hướng xử lý</p>
+                </div>
+                <span class="chip-outline">8 Bước • AI + Con người</span>
+              </div>
+
+              <!-- 4-Color Branch Legend -->
+              <div class="legend-strip">
+                <span class="legend-item badge-mint">● Có thể tiếp tục (Đủ điều kiện -> Bước 8)</span>
+                <span class="legend-item badge-amber">● Cần bổ sung thông tin (Rẽ Bước 3)</span>
+                <span class="legend-item badge-red">● Chưa đáp ứng (Rẽ Bước 5 — Hết hàng / Chậm tiến độ)</span>
+                <span class="legend-item badge-sky">● Chờ duyệt (Đang ở Bước 7)</span>
+              </div>
+
+              <!-- Live 8-Step Flowchart Strip (Click any step to interact!) -->
+              <div class="flowchart-strip" id="flowchartStrip"></div>
+
+              <!-- Interactive Step Inspector -->
+              <div class="step-inspector hidden" id="stepInspector"></div>
+
+              <!-- Bảng tổng hợp 4 nhóm (matching diagram bottom-left) -->
+              <div class="summary-4-grid" id="summary4Grid"></div>
+
+              <!-- Pipeline Distribution Matrix (Soft Pastel Blocks) -->
+              <div class="pipeline-matrix" id="pipelineMatrix" style="margin-top:12px;"></div>
+            </section>
+
+            <!-- INTERACTIVE AGENT CONSOLE: INPUT + RESULT -->
+            <div class="console-grid">
+              <section class="surface-card">
+                <div class="card-head">
+                  <h2>Tiếp nhận Yêu cầu Mới (Email / Web Form)</h2>
+                  <span class="step-tag">Bước 1</span>
+                </div>
+
+                <div class="sample-bar">
+                  <span class="muted small-label">Kịch bản kiểm thử nhanh:</span>
+                  <div id="sampleButtons" class="sample-pills"></div>
+                </div>
+
+                <form id="requestForm" class="stack-form">
+                  <div class="form-row-2">
+                    <label>
+                      Kênh tiếp nhận
+                      <select id="inpChannel">
+                        <option value="Email">Email</option>
+                        <option value="Web Form">Web Form</option>
+                      </select>
+                    </label>
+                    <label>
+                      Công ty khách hàng
+                      <input type="text" id="inpCompany" required placeholder="VD: Công ty ABC" />
+                    </label>
+                  </div>
+                  <div class="form-row-2">
+                    <label>
+                      Người liên hệ
+                      <input type="text" id="inpContactName" required placeholder="VD: Anh Hùng - IT" />
+                    </label>
+                    <label>
+                      Email liên hệ
+                      <input type="email" id="inpContactEmail" required placeholder="hung@abc.vn" />
+                    </label>
+                  </div>
+                  <label>
+                    Nội dung yêu cầu (Sản phẩm, số lượng, ngân sách, thời hạn, chiết khấu, người duyệt)
+                    <textarea id="inpRawContent" rows="5" required placeholder="Dán nội dung email hoặc biểu mẫu khách hàng..."></textarea>
+                  </label>
+                  <div class="form-actions">
+                    <button type="submit" class="btn btn-dark" id="btnRunAgent">
+                      <span>⚡ Chạy AI Agent Xử lý Quy trình</span>
+                    </button>
+                  </div>
+                </form>
+              </section>
+
+              <section class="surface-card" id="resultCard">
+                <div class="card-head">
+                  <h2>Kết quả Thẩm định & Dự thảo</h2>
+                  <span class="pill-badge" id="resultStatusBadge">Chưa chạy</span>
+                </div>
+                <div id="resultEmpty" class="empty-box">
+                  <div class="empty-icon">✨</div>
+                  <p>Chọn một yêu cầu mẫu bên trái và nhấn <strong>"Chạy AI Agent Xử lý Quy trình"</strong> để quan sát luồng phân loại, kiểm tra bảng giá, tồn kho Vận hành và phân quyền duyệt.</p>
+                </div>
+                <div id="resultBody" class="hidden">
+                  <div class="meta-grid" id="resultMetaGrid"></div>
+                  <div id="resultWarnings"></div>
+                  <div id="resultGateSection"></div>
+                  <div id="resultPricingSection"></div>
+                  <div id="resultOutputSection"></div>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <!-- TAB 2: TRACKER -->
+          <section class="tab-panel" id="tab-tracker">
+            <section class="surface-card">
+              <div class="card-head">
+                <div>
+                  <h2>Hàng đợi Hồ sơ & Chống trôi (6 NVKD)</h2>
+                  <p class="muted">Mọi yêu cầu thiếu ngân sách hay chưa rõ người duyệt đều có mã OPP, người phụ trách và SLA 24h.</p>
+                </div>
+              </div>
+              <div class="workload-grid" id="workloadGrid"></div>
+              <div id="trackerList" class="opp-list"></div>
+            </section>
+          </section>
+
+          <!-- TAB 3: MANAGER APPROVALS -->
+          <section class="tab-panel" id="tab-approvals">
+            <section class="surface-card">
+              <div class="card-head">
+                <div>
+                  <h2>Cổng Phê duyệt Trưởng phòng Kinh doanh</h2>
+                  <p class="muted">Tự động chuyển duyệt khi chiết khấu &gt; 5%, đơn &gt; 1 tỷ VND, đòi giá cũ hoặc không kịp tiến độ.</p>
+                </div>
+              </div>
+              <div id="approvalList" class="opp-list"></div>
+            </section>
+          </section>
+
+          <!-- TAB 4: MASTER DATA -->
+          <section class="tab-panel" id="tab-masterdata">
+            <div class="console-grid">
+              <section class="surface-card">
+                <div class="card-head">
+                  <h2>Bảng giá Hiệu lực & Tồn kho Vận hành</h2>
+                  <span class="pill-badge badge-sky">Active: BG-2026-11</span>
+                </div>
+                <div class="table-wrap">
+                  <table id="catalogTable">
+                    <thead>
+                      <tr>
+                        <th>SKU</th>
+                        <th>Sản phẩm / Dịch vụ</th>
+                        <th>Giá mới</th>
+                        <th>Giá cũ (khóa)</th>
+                        <th>Tồn kho</th>
+                        <th>Nhập thêm & Triển khai</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </section>
+
+              <section class="surface-card">
+                <div class="card-head">
+                  <h2>Đội ngũ 6 Nhân viên Kinh doanh</h2>
+                </div>
+                <div class="table-wrap">
+                  <table id="salesTeamTable">
+                    <thead>
+                      <tr>
+                        <th>Mã</th>
+                        <th>Nhân viên KD</th>
+                        <th>Chuyên môn</th>
+                        <th>Đang mở</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+                <div class="policy-box" id="policyBox"></div>
+              </section>
+            </div>
+          </section>
+
+          <!-- CUSTOMER PORTAL VIEW (WHEN SWITCHED TO KHÁCH HÀNG B2B) -->
+          <section id="customerPortalView" class="hidden">
+            <div class="kpi-grid">
+              <article class="kpi-card kpi-lavender">
+                <div class="kpi-top">
+                  <span class="kpi-label">Yêu cầu đã gửi Minh An</span>
+                  <span class="kpi-icon">📨</span>
+                </div>
+                <div class="kpi-main">
+                  <span class="kpi-value" id="custKpiTotal">0</span>
+                  <div class="kpi-trend">
+                    <span class="trend-pill up">Trực tuyến</span>
+                    <span class="trend-sub">đồng bộ real-time</span>
+                  </div>
+                </div>
+              </article>
+
+              <article class="kpi-card kpi-sky">
+                <div class="kpi-top">
+                  <span class="kpi-label">Cần bổ sung / Đang xử lý</span>
+                  <span class="kpi-icon">💬</span>
+                </div>
+                <div class="kpi-main">
+                  <span class="kpi-value" id="custKpiAction">0</span>
+                  <div class="kpi-trend">
+                    <span class="trend-pill down">Phản hồi nhanh</span>
+                    <span class="trend-sub">tương tác 2 chiều</span>
+                  </div>
+                </div>
+              </article>
+
+              <article class="kpi-card kpi-pink">
+                <div class="kpi-top">
+                  <span class="kpi-label">Báo giá đã sẵn sàng</span>
+                  <span class="kpi-icon">✅</span>
+                </div>
+                <div class="kpi-main">
+                  <span class="kpi-value" id="custKpiReady">0</span>
+                  <div class="kpi-trend">
+                    <span class="trend-pill up">Giá chuẩn</span>
+                    <span class="trend-sub">BG-2026-11</span>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <div class="console-grid">
+              <section class="surface-card">
+                <div class="card-head">
+                  <div>
+                    <h2>Gửi Yêu cầu Báo giá B2B tới Minh An</h2>
+                    <p class="muted">Chọn nhiều thiết bị/dịch vụ từ danh mục hoặc chat trực tiếp với Trợ lý AI góc phải.</p>
+                  </div>
+                  <span class="pill-badge badge-sky">Khách hàng B2B</span>
+                </div>
+
+                <form id="customerRequestForm" class="stack-form">
+                  <div class="form-row-2">
+                    <label>
+                      Tên Công ty Quý khách
+                      <input type="text" id="custCompany" required value="Công ty Cổ phần Công nghệ Ánh Dương" />
+                    </label>
+                    <label>
+                      Người liên hệ
+                      <input type="text" id="custContact" required value="Anh Đức - Trưởng phòng Mua sắm" />
+                    </label>
+                  </div>
+                  <div class="form-row-2">
+                    <label>
+                      Email nhận báo giá
+                      <input type="email" id="custEmail" required value="duc.muasam@anhduong.vn" />
+                    </label>
+                    <label>
+                      Người phê duyệt ngân sách
+                      <input type="text" id="custApprover" placeholder="Để trống nếu chưa rõ để test Bước 3" value="Chị Hương - Giám đốc Tài chính" />
+                    </label>
+                  </div>
+
+                  <div class="item-picker-box">
+                    <span class="muted" style="font-weight:700;">Chọn sản phẩm / dịch vụ cần báo giá:</span>
+                    <div class="picker-row">
+                      <select id="custCatalogSelect"></select>
+                      <input type="number" id="custItemQty" min="1" value="5" />
+                      <button type="button" class="btn btn-dark btn-sm" id="btnAddCustItem">+ Thêm</button>
+                    </div>
+                    <div class="selected-items-chips" id="custSelectedChips"></div>
+                  </div>
+
+                  <div class="form-row-2">
+                    <label>
+                      Ngân sách dự kiến (triệu VND — để trống nếu muốn test thiếu tin)
+                      <input type="number" id="custBudgetMillions" min="0" placeholder="VD: 500" value="450" />
+                    </label>
+                    <label>
+                      Thời hạn cần bàn giao (ngày)
+                      <input type="number" id="custDeadlineDays" min="1" placeholder="VD: 14" value="14" />
+                    </label>
+                  </div>
+
+                  <div class="form-row-2">
+                    <label>
+                      Đề nghị chiết khấu (%)
+                      <input type="number" id="custDiscountPct" min="0" max="30" step="0.5" value="4" />
+                    </label>
+                    <label>
+                      Ghi chú thêm (tùy chọn)
+                      <input type="text" id="custNotes" placeholder="VD: Giao tại chi nhánh Bình Dương" />
+                    </label>
+                  </div>
+
+                  <div class="form-actions">
+                    <button type="submit" class="btn btn-dark" id="btnCustSubmit">📨 Gửi Yêu cầu tới Minh An</button>
+                  </div>
+                </form>
+              </section>
+
+              <section class="surface-card">
+                <div class="card-head">
+                  <div>
+                    <h2>Theo dõi Hồ sơ & Báo giá từ Minh An</h2>
+                    <p class="muted">Khách hàng có thể bổ sung thông tin, thương thảo tiến độ hoặc chốt đơn ngay tại đây.</p>
+                  </div>
+                </div>
+                <div id="customerOppList" class="opp-list"></div>
+              </section>
+            </div>
+          </section>
+        </main>
+
+        <!-- RIGHT RAIL (MATCHING PLATFORM INSIGHT + APPLICANTS) -->
+        <aside class="right-rail">
+          <section class="surface-card insight-card">
+            <div class="card-head">
+              <h3>Chỉ số Guardrails</h3>
+              <span class="dots-btn">•••</span>
+            </div>
+            <div class="insight-list" id="guardrailInsights"></div>
+          </section>
+
+          <section class="surface-card team-rail-card">
+            <div class="card-head">
+              <h3>6 NVKD & Hồ sơ mới</h3>
+              <button class="link-btn" onclick="switchTab('tracker')">Xem tất cả</button>
+            </div>
+            <div class="rail-people-list" id="railPeopleList"></div>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CLARIFICATION REPLY -->
+  <div class="modal hidden" id="clarifyModal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="card-head">
+        <h3>Giả lập Khách hàng Bổ sung Thông tin</h3>
+        <button class="btn btn-soft btn-sm" id="btnCloseClarify">✕</button>
+      </div>
+      <p class="muted" id="clarifyModalSubtitle"></p>
+      <form id="clarifyForm" class="stack-form">
+        <input type="hidden" id="clarifyOppId" />
+        <label>
+          Ngân sách tổng xác nhận (VND)
+          <input type="number" id="clarifyBudget" required min="1000000" step="1000000" value="550000000" />
+        </label>
+        <label>
+          Thời hạn triển khai mong muốn (số ngày từ hôm nay)
+          <input type="number" id="clarifyDays" required min="1" max="120" value="20" />
+        </label>
+        <label>
+          Người phê duyệt phía Khách hàng
+          <input type="text" id="clarifyApprover" required value="Ông Trần Văn Hùng - Giám đốc Nhà máy" />
+        </label>
+        <label>
+          Đề nghị chiết khấu (%)
+          <input type="number" id="clarifyDiscount" required min="0" max="30" step="0.5" value="4" />
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-dark">↻ Nạp phản hồi & Chạy lại Quy trình</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: STEP 5 NEGOTIATION / STEP 7 REVISION -->
+  <div class="modal hidden" id="negotiateModal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="card-head">
+        <h3 id="negotiateModalTitle">Thương thảo Phương án Thay thế (Bước 5)</h3>
+        <button class="btn btn-soft btn-sm" id="btnCloseNegotiate">✕</button>
+      </div>
+      <p class="muted" id="negotiateModalSubtitle"></p>
+      <form id="negotiateForm" class="stack-form">
+        <input type="hidden" id="negotiateOppId" />
+        <input type="hidden" id="negotiateMode" value="negotiate" />
+        <label>
+          Thời hạn bàn giao mới sau thương thảo (ngày)
+          <input type="number" id="negotiateDays" required min="1" max="120" value="16" />
+        </label>
+        <label>
+          Mức chiết khấu điều chỉnh (%)
+          <input type="number" id="negotiateDiscount" required min="0" max="30" step="0.5" value="4" />
+        </label>
+        <label style="flex-direction:row;align-items:center;gap:8px;">
+          <input type="checkbox" id="negotiateAcceptCurrentPrice" checked style="width:auto;" />
+          <span>Khách hàng đồng ý áp dụng Bảng giá hiệu lực BG-2026-11</span>
+        </label>
+        <label style="flex-direction:row;align-items:center;gap:8px;">
+          <input type="checkbox" id="negotiatePartialDelivery" style="width:auto;" />
+          <span>Giao hàng làm 2 đợt (giao trước thiết bị sẵn kho)</span>
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-dark">↻ Xác nhận & Chạy tiếp Bước 6</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- FLOATING INTERACTIVE AI AGENT COPILOT -->
+  <button type="button" class="ai-fab" id="aiFab" title="Trò chuyện trực tiếp với AI Agent">
+    <span class="ai-fab-pulse"></span>
+    <span>🤖 Minh An AI Agent</span>
+  </button>
+
+  <section class="ai-chat-panel hidden" id="aiChatPanel" aria-label="Trợ lý AI Agent tương tác">
+    <div class="ai-chat-head">
+      <div>
+        <strong id="aiChatTitle">Minh An AI Agent</strong>
+        <span id="aiChatSub">Tương tác trực tiếp theo vai trò tài khoản</span>
+      </div>
+      <button type="button" class="btn btn-soft btn-sm" id="btnCloseAiChat">✕</button>
+    </div>
+    <div class="ai-chat-messages" id="aiChatMessages"></div>
+    <div class="chat-quick-chips" id="aiQuickChips"></div>
+    <form class="ai-chat-input-row" id="aiChatForm">
+      <input type="text" id="aiChatInput" required placeholder="Hỏi tồn kho, giá mới, mã OPP..." />
+      <button type="submit" class="btn btn-dark btn-sm">Gửi</button>
+    </form>
+  </section>
+
+  <!-- TOAST -->
+  <div class="toast hidden" id="toastBox"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
